@@ -1,29 +1,51 @@
 import React from 'react';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, logout } from './firebase';
-import { Auth } from './components/Auth'; // Importamos o nosso novo componente
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
+import { Header } from './components/layout/Header';
+import { AuthPage } from './pages/AuthPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { ProtectedLayout } from './components/layout/ProtectedLayout';
 
+// =============================================================
+// Componente Principal da Aplicação com a Lógica de Roteamento
+// =============================================================
 function App() {
-  const [user] = useAuthState(auth); // Usamos o hook aqui para mostrar/esconder o botão de logout
+  const { isLoggedIn, loading } = useAuth();
 
+  // 1. Enquanto o estado de autenticação está a ser verificado, mostramos um ecrã de loading.
+  // Isto evita "flashes" de conteúdo e redirecionamentos prematuros.
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>A carregar aplicação...</p>
+      </div>
+    );
+  }
+
+  // 2. O roteamento principal, agora que já sabemos o estado de autenticação.
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4">
-      <header className="w-full max-w-4xl flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800">🧠 ScanBudget</h1>
-          {user && (
-            <button
-              onClick={logout}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-            >
-              Logout
-            </button>
-          )}
-      </header>
-      
-      <main className="w-full max-w-4xl flex justify-center">
-        <Auth />
-      </main>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        {isLoggedIn ? (
+          // ROTAS PARA UTILIZADORES LOGADOS
+          <>
+            <Route element={<ProtectedLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              {/* Adicione outras rotas protegidas aqui, ex: <Route path="/profile" ... /> */}
+            </Route>
+            {/* Redireciona a rota raiz para o dashboard se estiver logado */}
+            <Route path="*" element={<Navigate to="/dashboard" />} />
+          </>
+        ) : (
+          // ROTAS PARA UTILIZADORES NÃO LOGADOS
+          <>
+            <Route path="/auth" element={<AuthPage />} />
+            {/* Redireciona qualquer outra rota para a página de autenticação se não estiver logado */}
+            <Route path="*" element={<Navigate to="/auth" />} />
+          </>
+        )}
+      </Routes>
+    </BrowserRouter>
   );
 }
 
