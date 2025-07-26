@@ -1,4 +1,5 @@
-import { SignedIn, SignedOut, SignIn, UserButton } from '@clerk/clerk-react';
+import React from 'react';
+import { SignedIn, SignedOut, SignIn, UserButton, ClerkLoaded } from '@clerk/clerk-react';
 import { ScanBudgetApp } from './ScanBudgetApp';
 
 function App() {
@@ -17,7 +18,10 @@ function App() {
         </SignedIn>
         <SignedOut>
           <div className="flex justify-center">
-            <SignIn path="/sign-in" routing="path" signUpUrl="/sign-up" />
+            {/* O ClerkLoaded espera até que tudo esteja pronto antes de tentar renderizar */}
+            <ClerkLoaded>
+              <SignIn />
+            </ClerkLoaded>
           </div>
         </SignedOut>
       </main>
