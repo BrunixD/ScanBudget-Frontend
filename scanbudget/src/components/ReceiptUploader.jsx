@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
-import { useAuth } from '@clerk/clerk-react';
 import Tesseract from 'tesseract.js';
 import { parseReceiptText } from '../utils/parser';
 
 // Use uma variável de ambiente para a URL da API para facilitar o deploy
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787' || 'http://127.0.0.1:8787';
 
-export const ReceiptUploader = ({ onProcessingComplete }) => {
+export const ReceiptUploader = ({ onProcessingComplete, user }) => {
   const [status, setStatus] = useState('idle');
   const [progress, setProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
-  const { getToken } = useAuth();
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
@@ -20,10 +18,12 @@ export const ReceiptUploader = ({ onProcessingComplete }) => {
     setStatus('processing');
 
     try {
-      const token = await getToken();
-      if (!token) throw new Error("Não autenticado!");
+      if (!user) throw new Error("Não autenticado!");
 
-      setStatus('uploading');
+      // A forma de obter o token muda para o Firebase
+      const token = await user.getIdToken();
+      
+      // 1. Pedir a signed URL
       const uploadUrlResponse = await fetch(`${API_URL}/api/generate-upload-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -41,9 +41,9 @@ export const ReceiptUploader = ({ onProcessingComplete }) => {
       
       setStatus('saving');
       const saveResponse = await fetch(`${API_URL}/api/expenses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ ...parsedData, imageUrl, rawText: data.text }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ /* ...seus dados... */ }),
       });
 
       if (!saveResponse.ok) throw new Error("Falha ao guardar a despesa.");

@@ -1,39 +1,45 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useAuth } from '@clerk/clerk-react';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
 
-// Helper to format currency
 const formatCurrency = (value) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
 
-export const Dashboard = () => {
+export const Dashboard = ({ user }) => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const { getToken } = useAuth();
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'
-
-  useEffect(() => {
+   useEffect(() => {
     const fetchExpenses = async () => {
-      // Obtém o token do Clerk
-      const token = await getToken();
-      if (!token) return;
+      // ESTA VERIFICAÇÃO É CRUCIAL
+      if (!user) {
+        console.log("Dashboard: A aguardar pelo objeto 'user'...");
+        return; 
+      }
 
       try {
         setLoading(true);
-        // Adiciona o header de Autorização ao pedido
+        const token = await user.getIdToken();
+        // console.log("Dashboard: Token obtido, a fazer o pedido fetch."); // Descomente para depurar
+
         const response = await fetch(`${API_URL}/api/expenses`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+
+        if (!response.ok) {
+          throw new Error('Falha ao obter despesas do backend');
+        }
+        
         const data = await response.json();
         setExpenses(data);
       } catch (error) {
-        console.error('Falha ao obter despesas:', error);
+        console.error('Erro ao obter despesas:', error);
       } finally {
         setLoading(false);
       }
     };
+    
     fetchExpenses();
-  }, [getToken]); // Adiciona getToken à lista de dependências
+  }, [user]);
 
   // Memoize the chart data so it's not recalculated on every render
   const chartData = useMemo(() => {
