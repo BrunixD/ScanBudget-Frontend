@@ -1,0 +1,28 @@
+import { SignedIn, SignedOut, SignIn, UserButton } from '@clerk/clerk-react';
+import { ScanBudgetApp } from './ScanBudgetApp';
+
+function App() {
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4">
+      <header className="w-full max-w-4xl flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800">🧠 ScanBudget</h1>
+          <SignedIn>
+            <UserButton afterSignOutUrl="/"/>
+          </SignedIn>
+      </header>
+      
+      <main className="w-full max-w-4xl">
+        <SignedIn>
+          <ScanBudgetApp />
+        </SignedIn>
+        <SignedOut>
+          <div className="flex justify-center">
+            <SignIn path="/sign-in" routing="path" signUpUrl="/sign-up" />
+          </div>
+        </SignedOut>
+      </main>
+    </div>
+  );
+}
+
+export default App;
